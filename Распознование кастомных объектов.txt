@@ -1,0 +1,88 @@
+implementation 'com.google.mlkit:image-labeling-custom:16.3.1'
+
+
+Ќужно сделать свою модель:
+
+1. ”станавливаем питон 3.6.7
+далее прописываем в терминале
+
+pip install --upgrade  "tensorflow==1.7.*"
+
+pip install PILLOW
+
+2. клонируем репу
+git clone https://github.com/googlecodelabs/tensorflow-for-poets-2
+3. cd tensorflow-for-poets-2
+
+
+скачиваем https://www.ffmpeg.org     FFmpeg
+отсюда https://github.com/BtbN/FFmpeg-Builds/releases/tag/autobuild-2021-10-07-12-22 win64 gpl
+потом папку помещаем в — , указываем в свойствах  дл€ переменной Path путь до FFmpeg/bin
+
+4. «агружаем изображени€ объекта ( в примере здесь делаетс€ видео в мп.4
+потом в терминале прописываем чтобы нарезать видео на фотки)
+
+
+
+ffmpeg -i *название видео*.mp4 *название папки*/*название файла*_%04d.jpg
+
+
+пример :  ffmpeg -i chapman2.mp4 training_data/chapman/chapman_%05d.jpg
+
+создаем папку training_data
+
+в ней об€зательно!!!! 2 минимум папки с фото
+
+потом в терминале прописываем 
+
+python -m scripts.retrain \
+--bottleneck_dir=tf_files/bottlenecks \
+--how_many_training_steps=500 \
+--model_dir=tf_files/models/ \
+--summaries_dir=tf_files/training_summaries/"mobilenet_0.50_224" \
+--output_graph=tf_files/retrained_graph.pb \
+--output_labels=tf_files/labels.txt \
+--architecture="mobilenet_0.50_224" \
+--image_dir=training_data
+
+далее прописываем
+
+pip install tflite-model-maker
+
+на вс€кий
+pip install tensorflow-gpu==1.15
+
+далее
+
+
+IMAGE_SIZE=224
+toco \
+--graph_def_file=tf_files/retrained_graph.pb \
+--output_file=chips_optimized_graph.tflite \
+--input_format=TENSORFLOW_GRAPHDEF \
+--output_format=TFLITE \
+--input_shape=1,${IMAGE_SIZE},${IMAGE_SIZE},3 \
+--input_array=input \
+--output_array=final_result \
+--inference_type=FLOAT \
+--input_data_type=FLOAT
+
+
+далее в приле
+
+ implementation('org.tensorflow:tensorflow-lite:0.0.0-nightly') { changing = true }
+    implementation('org.tensorflow:tensorflow-lite-gpu:0.0.0-nightly') { changing = true }
+    implementation('org.tensorflow:tensorflow-lite-support:0.0.0-nightly') { changing = true }
+
+нажимаем на папку app - new - folder - assets
+
+добавл€ем туда сгенеренный tflite
+
+в градле в android {
+прописываем 
+aaptOptions {
+        noCompress "tflite"
+        // or noCompress "lite"
+    }
+
+
